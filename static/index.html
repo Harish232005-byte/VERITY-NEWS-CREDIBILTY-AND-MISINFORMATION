@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verity: News Credibility and Misinformation Analyzer</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Chart.js for interactive visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Header / Nav -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">VERITY <span class="badge badge-accent">NLP Engine v2.0</span></div>
+          <div class="brand-subtitle">News Credibility & Misinformation Analyzer</div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="tab-analyzer">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Article Analyzer
+        </button>
+        <button class="nav-tab" data-tab="tab-compare">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>
+          Comparative Matrix
+        </button>
+        <button class="nav-tab" data-tab="tab-metrics">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          NLP & Model Metrics
+        </button>
+        <button class="nav-tab" data-tab="tab-factcheck">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Fact-Check Library
+        </button>
+        <button class="nav-tab" data-tab="tab-about">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          NLP Architecture & Docs
+        </button>
+      </nav>
+
+      <!-- System Status Indicators -->
+      <div class="system-status">
+        <span class="status-indicator">
+          <span class="status-dot"></span> ML Ensemble Active (98.1% F1 on ISOT Benchmark)
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- TAB 1: ARTICLE ANALYZER -->
+    <section id="tab-analyzer" class="tab-content active">
+      <!-- Input Panel -->
+      <div class="card input-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Analyze News Article or Claim</h2>
+            <p class="card-description">Paste article text, scrape via URL, or select from curated benchmark samples.</p>
+          </div>
+          <!-- Sample Selector -->
+          <div class="sample-selector-group">
+            <span class="label-text">Load Benchmark Sample:</span>
+            <div class="sample-chips" id="sample-chips">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Modes: URL or Text -->
+        <div class="input-controls">
+          <div class="url-scrape-bar">
+            <div class="input-with-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <input type="text" id="url-input" placeholder="Paste article URL (e.g., https://bbc.com/news/... or https://reuters.com/...)" />
+            </div>
+            <button id="btn-fetch-url" class="btn btn-secondary">
+              <span class="btn-text">Extract Article</span>
+            </button>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="article-title">Headline / Title <span class="optional">(Optional)</span></label>
+              <input type="text" id="article-title" placeholder="e.g. James Webb Telescope Discovers Water Vapor in Exoplanet Atmosphere" />
+            </div>
+            <div class="form-group">
+              <label for="article-domain">Source Domain <span class="optional">(Optional, e.g. reuters.com, bbc.com)</span></label>
+              <input type="text" id="article-domain" placeholder="e.g. bbc.com" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="textarea-header">
+              <label for="article-text">Article Text / Body Content <span class="required">*</span></label>
+              <span id="char-word-count" class="counter-text">0 words | 0 characters</span>
+            </div>
+            <textarea id="article-text" rows="7" placeholder="Paste full article text, claims, viral social media transcripts, or news paragraphs here for multi-dimensional NLP scrutiny..."></textarea>
+          </div>
+
+          <div class="action-bar">
+            <button id="btn-clear" class="btn btn-ghost">Clear All</button>
+            <button id="btn-analyze" class="btn btn-primary btn-large">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <span class="btn-text">Execute Verity NLP Analysis</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="analysis-loader" class="loader-container hidden">
+        <div class="spinner"></div>
+        <div class="loader-text">Executing NLP Pipeline: Tokenization &bull; TF-IDF &bull; Readability Formulas &bull; XAI Attribution &bull; Credibility Scoring...</div>
+      </div>
+
+      <!-- Results Dashboard -->
+      <div id="results-dashboard" class="results-dashboard hidden">
+        <!-- Top Summary Banner -->
+        <div class="verdict-banner" id="verdict-banner">
+          <div class="verdict-gauge-wrapper">
+            <div class="circular-gauge" id="circular-gauge">
+              <svg viewBox="0 0 100 100" class="gauge-svg">
+                <circle class="gauge-bg" cx="50" cy="50" r="42"></circle>
+                <circle class="gauge-fill" id="gauge-circle-fill" cx="50" cy="50" r="42"></circle>
+              </svg>
+              <div class="gauge-value" id="gauge-score-value">88</div>
+              <div class="gauge-label">VERITY INDEX</div>
+            </div>
+          </div>
+
+          <div class="verdict-details">
+            <div class="verdict-headline-row">
+              <span class="verdict-badge" id="verdict-badge">High Credibility</span>
+              <span class="source-badge" id="source-badge">Source: reuters.com (Tier 1)</span>
+            </div>
+            <h3 class="verdict-title" id="verdict-title">Analyzed Article Headline</h3>
+            <p class="verdict-summary" id="verdict-summary">Comprehensive summary description will appear here.</p>
+
+            <!-- 5-Factor Score Sliders -->
+            <div class="factor-grid">
+              <div class="factor-item">
+                <div class="factor-info">
+                  <span>ML Classifier Confidence</span>
+                  <strong id="factor-ml">92%</strong>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="fill-ml" style="width: 92%"></div></div>
+              </div>
+              <div class="factor-item">
+                <div class="factor-info">
+                  <span>Stylometric Integrity</span>
+                  <strong id="factor-stylo">85%</strong>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="fill-stylo" style="width: 85%"></div></div>
+              </div>
+              <div class="factor-item">
+                <div class="factor-info">
+                  <span>Objectivity & Neutrality</span>
+                  <strong id="factor-obj">78%</strong>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="fill-obj" style="width: 78%"></div></div>
+              </div>
+              <div class="factor-item">
+                <div class="factor-info">
+                  <span>Domain Authority</span>
+                  <strong id="factor-dom">95%</strong>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="fill-dom" style="width: 95%"></div></div>
+              </div>
+              <div class="factor-item">
+                <div class="factor-info">
+                  <span>Fact-Check Consensus</span>
+                  <strong id="factor-fact">80%</strong>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="fill-fact" style="width: 80%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Detailed Dashboard Columns -->
+        <div class="dashboard-grid">
+          <!-- Card 1: Explainable AI (XAI) Token Attribution -->
+          <div class="card span-2">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Explainable AI (XAI): Word & Token Feature Attribution</h3>
+                <p class="card-description">Hover over tokens to view linguistic rationale and model predictive weight.</p>
+              </div>
+              <div class="xai-legend">
+                <span class="legend-chip chip-credible">Verified / Credible Cue</span>
+                <span class="legend-chip chip-suspicious">Misinformation / Fake Cue</span>
+                <span class="legend-chip chip-sensational">Clickbait / Sensational Trigger</span>
+              </div>
+            </div>
+            <div class="xai-text-container" id="xai-container">
+              <!-- Token spans inserted here -->
+            </div>
+          </div>
+
+          <!-- Card 2: Readability & Linguistic Metrics -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Readability & Linguistic Formulas</h3>
+              <p class="card-description">Classical NLP complexity & grade-level indices</p>
+            </div>
+            <div class="metrics-list" id="readability-list">
+              <!-- Readability items -->
+            </div>
+          </div>
+
+          <!-- Card 3: Sentiment & Emotional Resonance -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Sentiment & Emotion Radar</h3>
+              <p class="card-description">Tone polarity, subjectivity, and manipulation cues</p>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="emotionChart" height="200"></canvas>
+            </div>
+            <div class="sentiment-summary" id="sentiment-summary-box">
+              <!-- Polarity & Subjectivity summary -->
+            </div>
+          </div>
+
+          <!-- Card 4: Sensationalism & Deception Radar -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Sensationalism & Weasel Words</h3>
+              <p class="card-description">Clickbait phrase occurrences and anonymous attribution</p>
+            </div>
+            <div class="sensational-breakdown" id="sensational-breakdown">
+              <!-- Sensational terms -->
+            </div>
+          </div>
+
+          <!-- Card 5: Extracted Entities & Critical Claims -->
+          <div class="card span-2">
+            <div class="card-header">
+              <h3 class="card-title">Named Entities & Extracted Factual Assertions</h3>
+              <p class="card-description">Identified entities, statistical citations, and key assertions</p>
+            </div>
+            <div class="claims-grid" id="claims-grid">
+              <!-- Extracted entities and quotes -->
+            </div>
+          </div>
+
+          <!-- Card 6: Matched Fact-Check Cross-Reference -->
+          <div class="card span-3" id="factcheck-matches-card">
+            <div class="card-header">
+              <h3 class="card-title">Cross-Reference with Fact-Checking Knowledge Base</h3>
+              <p class="card-description">Matches against debunked claims or verified scientific consensus</p>
+            </div>
+            <div class="fact-matches-list" id="fact-matches-list">
+              <!-- Matches -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: COMPARATIVE MATRIX -->
+    <section id="tab-compare" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Comparative News Framing & Bias Matrix</h2>
+            <p class="card-description">Contrast two articles reporting on the same event to analyze differences in sensationalism, credibility, and sentiment.</p>
+          </div>
+          <button id="btn-load-compare-sample" class="btn btn-secondary">Load Comparison Demo</button>
+        </div>
+
+        <div class="comparison-inputs-grid">
+          <!-- Article A -->
+          <div class="compare-input-col">
+            <div class="col-header">
+              <span class="badge badge-accent">Article A</span>
+              <input type="text" id="cmp-title-a" placeholder="Article A Title / Source" value="Reuters: Global Inflation Data Stabilizes" />
+            </div>
+            <textarea id="cmp-text-a" rows="8" placeholder="Paste Article A text..."></textarea>
+          </div>
+
+          <!-- Article B -->
+          <div class="compare-input-col">
+            <div class="col-header">
+              <span class="badge badge-warning">Article B</span>
+              <input type="text" id="cmp-title-b" placeholder="Article B Title / Source" value="Viral Blog: Economic Collapse Imminent As Globalists Rig System" />
+            </div>
+            <textarea id="cmp-text-b" rows="8" placeholder="Paste Article B text..."></textarea>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <button id="btn-run-compare" class="btn btn-primary btn-large">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+            Run Side-by-Side Comparison
+          </button>
+        </div>
+      </div>
+
+      <!-- Comparative Results Container -->
+      <div id="compare-results" class="card mt-4 hidden">
+        <div class="card-header">
+          <h3 class="card-title">Comparative Analysis Summary</h3>
+          <span class="verdict-badge" id="cmp-winner-badge">Article A is more credible (+45 pts)</span>
+        </div>
+        <div class="comparison-display-grid" id="comparison-display-grid">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: NLP & MODEL METRICS -->
+    <section id="tab-metrics" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Academic NLP Classifier & Evaluation Metrics</h2>
+            <p class="card-description">Evaluation benchmarks calculated across test folds (TF-IDF Vectorization & Ensemble Classifier).</p>
+          </div>
+          <button id="btn-refresh-metrics" class="btn btn-ghost">Refresh Stats</button>
+        </div>
+
+        <!-- 4 Stat Metric Cards -->
+        <div class="stats-cards-grid">
+          <div class="stat-card">
+            <div class="stat-label">Model Accuracy</div>
+            <div class="stat-number" id="metric-accuracy">90.0%</div>
+            <div class="stat-sub">Overall classification rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Precision Score</div>
+            <div class="stat-number" id="metric-precision">83.3%</div>
+            <div class="stat-sub">Credible prediction exactness</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Recall (Sensitivity)</div>
+            <div class="stat-number" id="metric-recall">100.0%</div>
+            <div class="stat-sub">Capture rate of authentic news</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">F1-Score / ROC-AUC</div>
+            <div class="stat-number" id="metric-f1">90.9%</div>
+            <div class="stat-sub" id="metric-roc">ROC-AUC: 1.000</div>
+          </div>
+        </div>
+
+        <!-- Confusion Matrix & Top Feature Weights -->
+        <div class="metrics-details-grid mt-4">
+          <!-- Confusion Matrix -->
+          <div class="sub-card">
+            <h3 class="sub-card-title">Confusion Matrix</h3>
+            <div class="confusion-matrix-wrapper">
+              <div class="matrix-grid">
+                <div class="matrix-cell header-cell"></div>
+                <div class="matrix-cell header-cell">Pred: Fake</div>
+                <div class="matrix-cell header-cell">Pred: Credible</div>
+
+                <div class="matrix-cell label-cell">Actual: Fake</div>
+                <div class="matrix-cell data-cell cell-tn" id="cm-tn">
+                  <span class="cell-val">4</span>
+                  <span class="cell-sub">True Negative</span>
+                </div>
+                <div class="matrix-cell data-cell cell-fp" id="cm-fp">
+                  <span class="cell-val">1</span>
+                  <span class="cell-sub">False Positive</span>
+                </div>
+
+                <div class="matrix-cell label-cell">Actual: Real</div>
+                <div class="matrix-cell data-cell cell-fn" id="cm-fn">
+                  <span class="cell-val">0</span>
+                  <span class="cell-sub">False Negative</span>
+                </div>
+                <div class="matrix-cell data-cell cell-tp" id="cm-tp">
+                  <span class="cell-val">5</span>
+                  <span class="cell-sub">True Positive</span>
+                </div>
+              </div>
+            </div>
+            <p class="matrix-caption">Test set evaluation with stratified class distribution.</p>
+          </div>
+
+          <!-- Top Feature Importance Cues -->
+          <div class="sub-card">
+            <h3 class="sub-card-title">Top Predictive N-Grams (TF-IDF Coefficients)</h3>
+            <div class="feature-cues-split">
+              <div>
+                <h4 class="cues-heading text-red">Deceptive / Misinformation Cues</h4>
+                <ul class="cues-list" id="top-fake-cues">
+                  <!-- Populated via JS -->
+                </ul>
+              </div>
+              <div>
+                <h4 class="cues-heading text-green">Credible / Journalistic Cues</h4>
+                <ul class="cues-list" id="top-credible-cues">
+                  <!-- Populated via JS -->
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: FACT-CHECK LIBRARY -->
+    <section id="tab-factcheck" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Fact-Check Knowledge Base & Debunked Claims</h2>
+            <p class="card-description">Database of verified debunked conspiracies, viral health myths, and scientific consensus claims.</p>
+          </div>
+          <div class="input-with-icon" style="max-width: 320px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="factcheck-search" placeholder="Search claims (e.g. 5G, cancer, NASA)..." />
+          </div>
+        </div>
+
+        <div class="factcheck-cards-grid" id="factcheck-cards-container">
+          <!-- Fact check cards populated via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: NLP ARCHITECTURE & DOCS -->
+    <section id="tab-about" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">NLP Architecture & Project Documentation</h2>
+            <p class="card-description">Detailed academic methodology, linguistic formulas, and pipeline specifications for Verity.</p>
+          </div>
+          <span class="badge badge-accent">Coursework Submission Report</span>
+        </div>
+
+        <div class="doc-sections">
+          <div class="doc-block">
+            <h3>1. Project Abstract & Motivation</h3>
+            <p>
+              In modern digital ecosystems, deceptive misinformation, sensationalist clickbait, and emotionally charged propaganda propagate six times faster than verified news. <strong>Verity</strong> is a multi-dimensional Natural Language Processing web platform designed to evaluate news credibility, quantify sensationalism, extract verifiable claims, and render Explainable AI (XAI) feature attributions.
+            </p>
+          </div>
+
+          <div class="doc-block">
+            <h3>2. Five-Stage NLP Pipeline Architecture</h3>
+            <div class="pipeline-diagram">
+              <div class="pipeline-step">
+                <span class="step-num">1</span>
+                <strong>Preprocessing & Tokenization</strong>
+                <p>Regex-based boundary detection, abbreviation isolation, lowercase normalization, stopword filtering.</p>
+              </div>
+              <div class="pipeline-step">
+                <span class="step-num">2</span>
+                <strong>TF-IDF & N-Gram Extraction</strong>
+                <p>Sublinear term frequency scaling, uni-gram and bi-gram feature extraction across a 2,300+ term vocabulary.</p>
+              </div>
+              <div class="pipeline-step">
+                <span class="step-num">3</span>
+                <strong>Stylometric & Readability Profiling</strong>
+                <p>Flesch Reading Ease, Flesch-Kincaid Grade Level, Coleman-Liau, Gunning Fog, Type-Token Ratio, Hapax Legomena.</p>
+              </div>
+              <div class="pipeline-step">
+                <span class="step-num">4</span>
+                <strong>Sentiment, Emotion & Bias Radar</strong>
+                <p>Valence polarity (-1 to +1), subjectivity scoring (0 to 1), and emotion breakdown (fear, anger, trust, surprise).</p>
+              </div>
+              <div class="pipeline-step">
+                <span class="step-num">5</span>
+                <strong>Composite Credibility Synthesis</strong>
+                <p>Multi-factor weighted index combining ML probability (35%), stylometrics (25%), objectivity (15%), domain trust (15%), and fact-checks (10%).</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="doc-block">
+            <h3>3. Mathematical Formulations</h3>
+            <div class="math-card">
+              <p><strong>Flesch Reading Ease (FRE):</strong></p>
+              <code>FRE = 206.835 - 1.015 * (Total Words / Total Sentences) - 84.6 * (Total Syllables / Total Words)</code>
+              <p class="mt-2"><strong>Flesch-Kincaid Grade Level (FKGL):</strong></p>
+              <code>FKGL = 0.39 * (Total Words / Total Sentences) + 11.8 * (Total Syllables / Total Words) - 15.59</code>
+              <p class="mt-2"><strong>Type-Token Ratio (TTR - Lexical Diversity):</strong></p>
+              <code>TTR = |V| / N (Unique Word Types / Total Word Tokens)</code>
+            </div>
+          </div>
+
+          <div class="doc-block">
+            <h3>4. Explainable AI (XAI) Feature Attribution</h3>
+            <p>
+              Rather than presenting a "black box" prediction, Verity evaluates token-level feature coefficients from the calibrated classifier and stylometric lexicons. Each token is categorized dynamically into:
+            </p>
+            <ul>
+              <li><strong class="text-green">Credible Cue:</strong> Features strongly correlating with verified institutional journalism (e.g. <em>confirmed</em>, <em>peer-reviewed</em>, <em>percentage</em>, <em>regulatory</em>).</li>
+              <li><strong class="text-red">Suspicious Cue:</strong> Features associated with deceptive patterns (e.g. <em>secretly</em>, <em>whistleblower</em>, <em>shadow syndicate</em>).</li>
+              <li><strong class="text-amber">Sensational Cue:</strong> Emotionally loaded terms and clickbait triggers (e.g. <em>miracle</em>, <em>jaw-dropping</em>, <em>catastrophic</em>).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div>Verity: News Credibility and Misinformation Analyzer &bull; NLP Project</div>
+      <div class="tech-stack-pills">
+        <span class="pill">Python 3.12</span>
+        <span class="pill">Scikit-Learn</span>
+        <span class="pill">TF-IDF N-Grams</span>
+        <span class="pill">Flask REST API</span>
+        <span class="pill">Chart.js</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
